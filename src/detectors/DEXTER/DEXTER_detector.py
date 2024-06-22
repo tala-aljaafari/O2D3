@@ -130,7 +130,6 @@ class DEXTER_Detector:
                 print("Using sliding window for feature extraction")
             else:
                 print("Not using sliding window for feature extraction")
-
             for episode in processed_train_data:
                 batch_ctr = 0
                 print("Episode: ", train_ep_ctr)
@@ -146,6 +145,7 @@ class DEXTER_Detector:
                             print("Batch: ", batch_ctr)
                     batch_ctr +=1 
                 train_ep_ctr += 1
+            
                 
             features = np.vstack(features)
 
@@ -194,7 +194,7 @@ class DEXTER_Detector:
         settings_efficient = settings.EfficientFCParameters()
 
         all_features_test = []
-
+        print("nb episodes:", len(test_data))
         for episode in test_data:
             batch_ctr = 0
                 
@@ -216,6 +216,8 @@ class DEXTER_Detector:
             features_test = np.vstack(features_test)
             
             # Impute missing values
+            ind = np.isinf(features_test)
+            features_test[ind] = np.nan
             features_imputed_test = self.imputer.transform(features_test)
             all_features_test.append(features_imputed_test)
 

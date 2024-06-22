@@ -1,25 +1,32 @@
 
 import numpy as np
 from statsmodels.tsa.arima_process import ArmaProcess
+from statsmodels.tsa.api import VARMAX
 
-def normalized_autoregressive_process(coeffs, T):
-    """
-    :param coeffs: number of coeffs determines correlation cut-off
-    :param T: length of timeseries
-    :return:
-    """
+def VARMAProcess(coeffs, T, k):
+    p = 2  # AR order
+    model = VARMAX(np.zeros((T, k)), order=(p, 0))
 
-    ar1 = np.array([1] + list(coeffs))
-    # Define the MA coefficients
-    ma1 = np.array([1])
-    MA_object1 = ArmaProcess(ar1, ma1)
-    noise = MA_object1.generate_sample(nsample=T)
+    matrix = np.full((k, k), 0.2)
+    np.fill_diagonal(matrix, 0.8)
+    matrix[0, 0] = 0.5
 
-    # normalize
-    s_matrix = np.stack([ArmaProcess(ar1, ma1).generate_sample(nsample=T) for i in range(100)])
-    normalized_noise = (noise-np.mean(s_matrix, axis=0)) / np.std(s_matrix, axis=0)
-    return normalized_noise
 
+    if coeffs[0] == 0.0 and coeffs[1] == 0.95 :
+        ar_params = np.hstack((np.zeros((k, k)), matrix))
+    elif coeffs[0] == 0.0 and coeffs[1] == 0.0 :
+        ar_params = np.hstack((np.zeros((k, k)), np.zeros((k, k))))
+    else:
+        ar_params = np.hstack((matrix, np.zeros((k, k))))
+
+    cov_matrix = np.eye(k)
+    lower_tri_indices = np.tril_indices(k)
+    cov_matrix = cov_matrix[lower_tri_indices]
+
+    y = model.simulate(params=[0] * k + ar_params.flatten().tolist() + cov_matrix.tolist(), nsimulations=T)
+    y = (y-np.mean(y, axis=0)) / np.std(y, axis=0)
+
+    return np.array(y).T
 
 class AnomMJEnv:
     """
@@ -162,25 +169,24 @@ class AnomMJEnv:
 
         if self.obs_noise_train is not None:
             obs_mod_corr_noise_train = self.obs_noise_train["mod_corr_noise"]
-            self.train_obs_noise_vec = np.stack(
-                [normalized_autoregressive_process(obs_mod_corr_noise_train, T) for _ in range(obs_dim)])
+            self.train_obs_noise_vec = VARMAProcess(obs_mod_corr_noise_train, T, obs_dim)
         if self.obs_noise_test is not None:
             obs_mod_corr_noise_test = self.obs_noise_test["mod_corr_noise"]
-            self.test_obs_noise_vec = np.stack([normalized_autoregressive_process(obs_mod_corr_noise_test, T) for _ in range(obs_dim)])
+            self.test_obs_noise_vec = VARMAProcess(obs_mod_corr_noise_test, T, obs_dim)
 
         if self.state_noise_train is not None:
             state_mod_corr_noise_train = self.state_noise_train["mod_corr_noise"]
-            self.train_state_noise_vec = np.stack([normalized_autoregressive_process(state_mod_corr_noise_train, T) for _ in range(state_dim)])
+            self.train_state_noise_vec = VARMAProcess(state_mod_corr_noise_train, T, state_dim)
         if self.state_noise_test is not None:
             state_mod_corr_noise_test = self.state_noise_test["mod_corr_noise"]
-            self.test_state_noise_vec = np.stack([normalized_autoregressive_process(state_mod_corr_noise_test, T) for _ in range(state_dim)])
+            self.test_state_noise_vec = VARMAProcess(state_mod_corr_noise_test, T, state_dim)
 
         if self.force_noise_train is not None:
             force_mod_corr_noise_train = self.force_noise_train["mod_corr_noise"]
-            self.train_force_noise_vec = np.stack([normalized_autoregressive_process(force_mod_corr_noise_train, T) for _ in range(force_dim)])
+            self.train_force_noise_vec = VARMAProcess(force_mod_corr_noise_train, T, force_dim)
         if self.force_noise_test is not None:
             force_mod_corr_noise_test = self.force_noise_test["mod_corr_noise"]
-            self.test_force_noise_vec = np.stack([normalized_autoregressive_process(force_mod_corr_noise_test, T) for _ in range(force_dim)])
+            self.test_force_noise_vec = VARMAProcess(force_mod_corr_noise_test, T, force_dim)
 
         self.dist_parameters_train()
 
