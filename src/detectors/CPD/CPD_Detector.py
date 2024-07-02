@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
@@ -83,6 +84,7 @@ class CPD_Detector:
 
         #==BEGIN TRAINING==#
         #needed because we have to reset the detector after each episode, by the implementation of it
+        start_time =  time.time()
         self.detector = ocd.setStatus(self.detector,'estimating')
 
         states_train = [ep.states for ep in train_ep_data]
@@ -112,7 +114,9 @@ class CPD_Detector:
 
                 self.detector = ocd.getData(self.detector, x_new)
         
-        
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print("Execution time:", execution_time, "seconds")
         #TEST THE DETECTOR
         anom_scores = []
         anom_score = 0

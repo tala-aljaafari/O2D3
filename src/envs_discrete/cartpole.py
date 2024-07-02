@@ -11,28 +11,38 @@ import math
 import numpy as np
 from statsmodels.tsa.arima_process import ArmaProcess
 from typing import Optional
+from statsmodels.tsa.api import VARMAX
 import pickle
 
 #seed
 np.random.seed(2023)
 
 #AR Process
-def normalized_autoregressive_process(coeffs, T):
-    """
-    :param coeffs: number of coeffs determines correlation cut-off
-    :param T: length of timeseries
-    :return:
-    """
+def VARMAProcess(coeffs, T, k):
+    p = 2  # AR order
+    model = VARMAX(np.zeros((T, k)), order=(p, 0))
 
-    coeffs = [-coeff for coeff in coeffs]
-    ar1 = np.array([1] + list(coeffs)) 
-    ma1 = np.array([1])
-    MA_object1 = ArmaProcess(ar1, ma1)
-    
-    #normalize
-    noise = MA_object1.generate_sample(nsample=T)
-    normalized_noise = noise / np.std(noise)
-    return normalized_noise
+    matrix = np.full((k, k), 0.2)
+    np.fill_diagonal(matrix, 0.8)
+    matrix[0, 0] = 0.5
+
+
+    if coeffs[0] == 0.0 and coeffs[1] == 0.95 :
+        ar_params = np.hstack((np.zeros((k, k)), matrix))
+    elif coeffs[0] == 0.0 and coeffs[1] == 0.0 :
+        #return np.zeros((k, T))
+        ar_params = np.hstack((np.zeros((k, k)), np.zeros((k, k))))
+    else:
+        ar_params = np.hstack((matrix, np.zeros((k, k))))
+
+    cov_matrix = np.eye(k)
+    lower_tri_indices = np.tril_indices(k)
+    cov_matrix = cov_matrix[lower_tri_indices]
+
+    y = model.simulate(params=[0] * k + ar_params.flatten().tolist() + cov_matrix.tolist(), nsimulations=T)
+    y = (y-np.mean(y, axis=0)) / np.std(y, axis=0)
+
+    return np.array(y).T
 
 #IMANS = ARNS 
 class IMANSCartpoleEnv(CartPoleEnv):
@@ -84,8 +94,8 @@ class IMANSCartpoleEnv(CartPoleEnv):
         T = self.ep_length + 1
         obs_dim = self.observation_space.shape[0]
         
-        self.train_state_noise_vec = np.stack([normalized_autoregressive_process(self.train_mod_corr_noise, T) for _ in range(obs_dim)])
-        self.test_state_noise_vec = np.stack([normalized_autoregressive_process(self.test_mod_corr_noise, T) for _ in range(obs_dim)])
+        self.train_state_noise_vec = VARMAProcess(self.train_mod_corr_noise, T, obs_dim)
+        self.test_state_noise_vec = VARMAProcess(self.test_mod_corr_noise, T, obs_dim)
         
         self.train_noise_step_ctr = 0
         self.test_noise_step_ctr = 0
@@ -256,8 +266,8 @@ class IMANOCartpoleEnv(CartPoleEnv):
         T = self.ep_length + 1
         obs_dim = self.observation_space.shape[0]
 
-        self.train_obs_noise_vec = np.stack([normalized_autoregressive_process(self.train_mod_corr_noise, T) for _ in range(obs_dim)])
-        self.test_obs_noise_vec = np.stack([normalized_autoregressive_process(self.test_mod_corr_noise, T) for _ in range(obs_dim)])
+        self.train_obs_noise_vec = VARMAProcess(self.train_mod_corr_noise, T, obs_dim)
+        self.test_obs_noise_vec = VARMAProcess(self.test_mod_corr_noise, T, obs_dim)
         
         self.train_noise_step_ctr = 0
         self.test_noise_step_ctr = 0
@@ -410,8 +420,8 @@ class TimeSeriesEnv(CartPoleEnv):
         # generate the noise variates for the whole episode in advance
         T = self.ep_length + 1
         obs_dim = self.observation_space.shape[0]
-        self.train_obs_noise_vec = np.stack([normalized_autoregressive_process(self.train_mod_corr_noise, T) for _ in range(obs_dim)])
-        self.test_obs_noise_vec = np.stack([normalized_autoregressive_process(self.test_mod_corr_noise, T) for _ in range(obs_dim)])
+        self.train_obs_noise_vec = VARMAProcess(self.train_mod_corr_noise, T, obs_dim)
+        self.test_obs_noise_vec = VARMAProcess(self.test_mod_corr_noise, T, obs_dim)
         
         self.train_noise_step_ctr = 0
         self.test_noise_step_ctr = 0

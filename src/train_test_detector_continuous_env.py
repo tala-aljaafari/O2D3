@@ -3,6 +3,7 @@ This file loads a pregenerated training dataset and a pregenerated agent policy,
 """
 
 import os
+import time
 import sys
 import torch
 import argparse
@@ -28,6 +29,7 @@ sys.path.append(parent_dir)
 
 from detectors.PEDM.pedm_detector import PEDM_Detector
 from detectors.DEXTER.DEXTER_detector import DEXTER_Detector
+from detectors.RBFDEXTER.RBFDEXTER_detector import RBFDEXTER_Detector
 from detectors.CPD.CPD_Detector import CPD_Detector
 
 import envs_continuous
@@ -393,8 +395,9 @@ if __name__ == "__main__":
     
     DEXTER_Detectors = ["DEXTER_Detector", "DEXTER_S_Detector"]
     CPD_Detectors = ["CPD_ocd", "CPD_Chan", "CPD_Mei", "CPD_XS"]
-
-    if args.detector_name not in CPD_Detectors and args.detector_name not in DEXTER_Detectors:
+    if args.detector_name == "RBFDEXTER_Detector":
+        print("Testing on RBF DEXTER Detector")
+    elif args.detector_name not in CPD_Detectors and args.detector_name not in DEXTER_Detectors:
         detector_class = globals()[args.detector_name]
         print("Testing on one of the detectors from Haider et al (2023)")
     
@@ -438,10 +441,34 @@ if __name__ == "__main__":
                                    sliding = False)
 
         #train
+        start_time = time.time()
+        detector = train_detector_DEXTER(detector = detector, 
+                                         args = args)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print("Execution time:", execution_time, "seconds")
+        print("=== DEXTER DETECTOR TRAINED! ===\n")
+
+    elif args.detector_name == "RBFDEXTER_Detector":
+        #IMP: SPECIFY BATCH SIZE HERE
+        #Batch size = window size
+        n_dimensions = train_env.observation_space.shape[0]
+        print("NUM DIMS: ", n_dimensions)
+
+        batch_size = 10
+
+        #initialize
+        detector = RBFDEXTER_Detector(n_dimensions = n_dimensions, 
+                                   batch_size=batch_size, 
+                                   sliding = False)
+        #train
+        start_time = time.time()
         detector = train_detector_DEXTER(detector = detector,
                                          args = args)
-        
-        print("=== DEXTER DETECTOR TRAINED! ===\n")
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print("Execution time:", execution_time, "seconds")
+        print("=== RBFDEXTER DETECTOR TRAINED! ===\n")
     
     #If it's a CPD Detector, we have to train in with each test episode, so we skip training for now
     elif args.detector_name in CPD_Detectors:
@@ -469,12 +496,17 @@ if __name__ == "__main__":
         print("DETECTOR TYPE: PEDM")
         print(" ")
         print("=== BEGIN TRAINING DETECTOR ===")
+        start_time =  time.time()
         detector = train_detector_PEDM(
             args,
             env = train_env,
             num_train_episodes = args.num_train_episodes,
             data_path = args.train_data_path,
             detector_class = detector_class)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print("Execution time:", execution_time, "seconds")
+        print("=== DEXTER DETECTOR TRAINED! ===\n")
         print("=== DETECTOR TRAINED! ===\n")
 
         # Save the detector
@@ -552,7 +584,7 @@ if __name__ == "__main__":
         test_episode_ctr += 1
 
         #Generate anomaly scores
-        if args.detector_name in DEXTER_Detectors:
+        if args.detector_name in DEXTER_Detectors or args.detector_name == "RBFDEXTER_Detector":
             anom_scores = test_detector_DEXTER(
                 detector = detector, 
                 args = args,

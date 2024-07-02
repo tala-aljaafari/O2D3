@@ -4,27 +4,35 @@ from statsmodels.tsa.arima_process import ArmaProcess
 from statsmodels.tsa.api import VARMAX
 
 def VARMAProcess(coeffs, T, k):
-    p = 2  # AR order
+    # Define a VARMA model of order (2,0)
+    p = 2  
     model = VARMAX(np.zeros((T, k)), order=(p, 0))
 
+    # Correlation matrix 
+    # diagonal is 0.8, first elt is 0.5, all other elts are 0.2
     matrix = np.full((k, k), 0.2)
     np.fill_diagonal(matrix, 0.8)
     matrix[0, 0] = 0.5
 
-
-    if coeffs[0] == 0.0 and coeffs[1] == 0.95 :
-        ar_params = np.hstack((np.zeros((k, k)), matrix))
-    elif coeffs[0] == 0.0 and coeffs[1] == 0.0 :
-        ar_params = np.hstack((np.zeros((k, k)), np.zeros((k, k))))
-    else:
+    # 1-step correlation
+    if coeffs[0] == 0.95 and coeffs[1] == 0.0 : 
         ar_params = np.hstack((matrix, np.zeros((k, k))))
+    # 2-step correlation
+    elif coeffs[0] == 0.0 and coeffs[1] == 0.95 :
+        ar_params = np.hstack((np.zeros((k, k)), matrix))
+    # no correlation
+    else:
+        #return np.zeros((k, T)) 
+        ar_params = np.hstack((np.zeros((k, k)), np.zeros((k, k))))
 
+    # Covariance matrix for epsilon
     cov_matrix = np.eye(k)
     lower_tri_indices = np.tril_indices(k)
     cov_matrix = cov_matrix[lower_tri_indices]
 
+    # The parameters of the model have to be added in a weird way ..
     y = model.simulate(params=[0] * k + ar_params.flatten().tolist() + cov_matrix.tolist(), nsimulations=T)
-    y = (y-np.mean(y, axis=0)) / np.std(y, axis=0)
+    y = (y-np.mean(y, axis=1)) / np.std(y, axis=1)
 
     return np.array(y).T
 
