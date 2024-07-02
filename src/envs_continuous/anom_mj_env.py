@@ -32,7 +32,7 @@ def VARMAProcess(coeffs, T, k):
 
     # The parameters of the model have to be added in a weird way ..
     y = model.simulate(params=[0] * k + ar_params.flatten().tolist() + cov_matrix.tolist(), nsimulations=T)
-    y = (y-np.mean(y, axis=1)) / np.std(y, axis=1)
+    y = (y-np.mean(y, axis=0)) / np.std(y, axis=0)
 
     return np.array(y).T
 
