@@ -150,9 +150,10 @@ class RBFDEXTER_Detector:
                 print("Not using sliding window for feature extraction")
 
             for episode in processed_train_data:
-
+                print("Episode shape:", np.array(episode).shape)
                 print("Episode: ", train_ep_ctr)
                 X = make_kernel_tensor(episode)
+                print("X shape", np.array(X).shape)
                 train_ep_ctr += 1
 
                 # Replace infinities with NaN
@@ -203,16 +204,17 @@ class RBFDEXTER_Detector:
         
         test_data = [observations]
         all_features_test = []
-
+        print("test data", np.array(test_data).shape)
         for episode in test_data:
-        
+            print("test episode shape", np.array(episode).shape)
             X = make_kernel_tensor(episode)
-            
+            print("X shape", np.array(X).shape)
             # Replace infinities with NaN
             ind = np.isinf(X)
             X[ind] = np.nan
 
             # Impute missing values
+            self.imputer.fit(X)
             features_imputed_test = self.imputer.transform(X)
             all_features_test.append(features_imputed_test)
 

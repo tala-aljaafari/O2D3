@@ -28,6 +28,9 @@ from detectors.RBFDEXTER.RBFDEXTER_detector import RBFDEXTER_Detector
 from detectors.CPD.CPD_Detector import CPD_Detector
 
 import envs_discrete
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def generate_time_id():
     return datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
@@ -494,14 +497,14 @@ if __name__ == "__main__":
         # therefore, adjust injection time
         if args.test_env_id in ["IMANOCartpoleEnv-v0", "IMANSCartpoleEnv-v0"]:
             if args.test_noise_strength <= 1.5:
-                injection_time = np.random.randint(5, train_env.ep_length - 5)
+                injection_time = np.random.randint(5, train_env.unwrapped.ep_length - 5)
             elif 1.5 < args.test_noise_strength <= 5.0:
-                injection_time = np.random.randint(5, (train_env.ep_length - 50) - 5)
+                injection_time = np.random.randint(5, (train_env.unwrapped.ep_length - 50) - 5)
             else:
-                injection_time = np.random.randint(5, (train_env.ep_length - 100) - 5)
+                injection_time = np.random.randint(5, (train_env.unwrapped.ep_length - 100) - 5)
         
         else:
-            injection_time = np.random.randint(5, train_env.ep_length - 5)
+            injection_time = np.random.randint(5, train_env.unwrapped.ep_length - 5)
 
         #if the environment is the same for train and testing
         if args.train_env_noise_corr == args.test_env_noise_corr and args.train_noise_strength == args.test_noise_strength:
