@@ -8,5 +8,5 @@ train_noise_strength: 2.0
 test_env_noise_corr: (0.0, 0.95)
 test_noise_strength: 2.0
 
-reward: -194.19
-auroc: 0.97
+reward: -106.43
+auroc: 0.99

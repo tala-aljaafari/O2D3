@@ -9,4 +9,4 @@ test_env_noise_corr: (0.0, 0.95)
 test_noise_strength: 0.6
 
 reward: -65.76
-auroc: 0.96
+auroc: 0.98

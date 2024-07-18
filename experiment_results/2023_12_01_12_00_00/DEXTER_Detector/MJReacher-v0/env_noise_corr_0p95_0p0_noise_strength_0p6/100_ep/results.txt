@@ -1,12 +1,12 @@
-Detector: PEDM_Detector
+Detector: DEXTER_Detector
 train_env: MJReacher-v0
 test_env: MJReacher-v0
 num train episodes: 2000
 num test episodes: 100
 train_env_noise_corr: (0.0, 0.0)
 train_noise_strength: 0.6
-test_env_noise_corr: (0.0, 0.95)
+test_env_noise_corr: (0.95, 0.0)
 test_noise_strength: 0.6
 
-reward: -63.69
-auroc: 0.8
+reward: -64.6
+auroc: 0.98
