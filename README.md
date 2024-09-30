@@ -1,4 +1,4 @@
-Supercharging OOD Detection
+#Supercharging OOD Detection
 
 
 This repository contains the implementation for our project on Supercharging Out-of-Distribution (OOD) Detection. The codebase includes various models and techniques to improve the detection of OOD samples in deep learning tasks.
