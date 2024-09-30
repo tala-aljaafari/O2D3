@@ -4,7 +4,7 @@ This repository contains the implementation for the first part of my thesis on S
 
 ## Structure
 
-```
+```markdown
 - **/src/**: Contains the main source code for the detectors and environments.
   - **/detectors/**: Implementation of DEXTER, RBFDEXTER, PEDM, and OCD.
   - **/envs_continuous/**: The environments we test on (Pusher, Reacher, HalfCheetah).
