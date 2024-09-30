@@ -5,23 +5,35 @@ This repository contains the implementation for the first part of my thesis on S
 ## Structure
 
 ```markdown
-- **/src/**: Contains the main source code for the application.
-  - **main.py**: The entry point of the application.
-  - **utils.py**: Helper functions used throughout the project.
-  - **/config/**: Configuration files to manage settings.
+- **/src/**: Contains the main source code for the detectors and environments.
+  - **/detectors/**: Implementation of DEXTER, RBFDEXTER, PEDM, and OCD.
+  - **/envs_continuous/**: The environments we test on (Pusher, Reacher, HalfCheetah).
+    -**anom_mj_env.py**: The code for generating cross-dimensionally correlated anomalies.
 
-- **/tests/**: All test scripts to validate functionality and ensure code quality.
-  - **test_main.py**: Tests related to the `main.py` script.
+- **/assets/**: Contains the policies and rollouts needed for each experiment.
 
-- **/docs/**: All project documentation, including guides and explanations of features.
-  - **index.md**: The starting point for documentation, covering project goals and usage.
+- **/CUSUM/**: Contains the CUSUM extension of RBFDEXTER.
+```
+## Example Commands
+To test RBFDEXTER on Reacher, with observation noise strength of 0.4 (corresponding to Light Noise), 1-step noise correlation for testing, use the following command:
 
-- **requirements.txt**: A list of dependencies needed to run the application.
-
-- **README.md**: Overview of the project, including setup, usage instructions, and more details.
-
-- **LICENSE**: The licensing information for this project.
-
+```
+python train_test_detector_continuous_env.py \
+    --detector-name "RBFDEXTER_Detector" \
+    --train-env-id "MJReacher-v0" \
+    --test-env-id "MJReacher-v0" \
+    --train-data-path "../assets/rollouts/IMANOReacher-v0/env_noise_corr_0p0_0p0_noise_strength_0p4/50_ep/ep_data.pkl" \
+    --policy-path "../assets/policies/IMANOReacher-v0/env_noise_corr_0p0_0p0_noise_strength_0p4/best_model.zip_jit.pt" \
+    --train-env-noise-corr "(0.0,0.0)" \
+    --test-env-noise-corr "(0.95,0.0)" \
+    --train-noise-strength 0.4 \
+    --test-noise-strength 0.4 \
+    --noise-mode "obs" \
+    --num-train-episodes 2000 \
+    --num-test-episodes 100 \
+    --experiment-id "2023_12_01_12_00_00" \
+    --seed 2023
+```
 
 ## Credits
 
